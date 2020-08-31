@@ -21,54 +21,49 @@ void drive_robot(float lin_x, float ang_z)
 void process_image_callback(const sensor_msgs::Image img)
 {
 
-  int white_pixel = 255;
+
   bool white_ball_found = false;
   float white_pixel_location = -1;
+  float rowLength = img.step;
   float linear = 0.0;
   float angular = 0.0;
-
-
+  int white_pixel = 255;
   int left_edge = img.width / 3;
   int center_edge = left_edge * 2;
-
-  int currentRow = 0;
-  int direction = 0;
-  int endOfRow = img.width;
+  int currentRow = 1;
+  int endOfRow = img.step;
 
   // Loop through each pixel in the image and check if there's a bright white one
   for (int i = 0; i < img.height * img.step; i++) {
-    if (img.data[i] + img.data[i + 1] + img.data[i + 2] == 255 * 3) {
-      white_ball_found = true;
-      white_pixel_location = i / img.step;
 
-      // left
-      if(i <= left_edge){
-        direction = 1;
-        linear = 0.5;
-        angular = 0.6;
+    if (img.data[i] == 255) {
+      white_ball_found = true;
+      white_pixel_location = ((img.step * currentRow) - i) / rowLength;
+      // ROS_INFO_STREAM("i is " << i << " current row is " << currentRow << "white pixel location is " << white_pixel_location);
+
+      // right
+      if(white_pixel_location <= 0.475){
+        linear = 0.1;
+        angular = -0.3;
       }
       // center
-      else if(i <= center_edge){
-        direction = 2;
-        linear = 0.5;
+      else if(white_pixel_location <= 0.575){
+        linear = 0.4;
         angular = 0.0;
       }
-      // right
-      else if(i <= img.step){
-        direction = 3;
-        linear = 0.5;
-        angular = -0.6;
+      // left
+      else if(white_pixel_location <= 1.0){
+        linear = 0.1;
+        angular = 0.3;
       }
       break;
     }
 
-    // update edge boundaries every time we enter a new row
-    /*if(i / 3 == endOfRow){
+    // update current row and end of row at the end of each row
+    if(i == endOfRow){
       currentRow++;
-      left_edge += img.width * currentRow;
-      center_edge += img.width * currentRow;
-      endOfRow += img.width;
-    }*/
+      endOfRow += img.step;
+    }
   }
 
   if(white_ball_found){
@@ -77,7 +72,7 @@ void process_image_callback(const sensor_msgs::Image img)
   }
   else{
     // Request a stop when there's no white ball seen by the camera
-    ROS_ERROR("Failed to locate any white pixels");
+    //ROS_ERROR("Failed to locate any white pixels");
     drive_robot(0.0, 0.0);
   }
 }
