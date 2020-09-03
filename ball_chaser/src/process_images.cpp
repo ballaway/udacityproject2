@@ -34,9 +34,9 @@ void process_image_callback(const sensor_msgs::Image img)
   int endOfRow = img.step;
 
   // Loop through each pixel in the image and check if there's a bright white one
-  for (int i = 0; i < img.height * img.step; i++) {
+  for (int i = 0; i < img.height * img.step; i = i + 3) {
 
-    if (img.data[i] == 255) {
+    if (img.data[i] == 255 && img.data[i + 1] == 255 && img.data[i + 2] == 255) {
       white_ball_found = true;
       white_pixel_location = ((img.step * currentRow) - i) / rowLength;
       // ROS_INFO_STREAM("i is " << i << " current row is " << currentRow << "white pixel location is " << white_pixel_location);
